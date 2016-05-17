@@ -81,7 +81,7 @@ class DirtyFieldsMixin(object):
                                          self.compare_function)
 
         if check_m2m:
-            modified_m2m_fields = compare_states(check_m2m,
+            modified_m2m_fields = compare_states(self._as_dict_m2m(),
                                                  self._original_m2m_state,
                                                  self.compare_function)
             modified_fields.update(modified_m2m_fields)
