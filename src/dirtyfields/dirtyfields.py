@@ -18,7 +18,7 @@ class DirtyFieldsMixin(object):
             reset_state, sender=self.__class__,
             dispatch_uid='{name}-DirtyFieldsMixin-sweeper'.format(
                 name=self.__class__.__name__))
-        self._connect_m2m_relations()
+        #self._connect_m2m_relations()
         reset_state(sender=self.__class__, instance=self)
 
     def _connect_m2m_relations(self):
