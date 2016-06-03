@@ -18,13 +18,16 @@ class DirtyFieldsMixin(object):
             reset_state, sender=self.__class__,
             dispatch_uid='{name}-DirtyFieldsMixin-sweeper'.format(
                 name=self.__class__.__name__))
-        #self._connect_m2m_relations()
-        reset_state(sender=self.__class__, instance=self)
+        self._connect_m2m_relations()
+        self._original_state = instance._as_dict(check_relationship=True)
+
+        # m2m state is lazy loaded to prevent extraneous database calls
+        self._original_m2m_state = None
 
     def _connect_m2m_relations(self):
         for m2m_field, model in self._meta.get_m2m_with_model():
             m2m_changed.connect(
-                reset_state, sender=m2m_field.rel.through,
+                on_m2m_changed, 
                 dispatch_uid='{name}-DirtyFieldsMixin-sweeper-m2m'.format(
                     name=self.__class__.__name__))
 
@@ -82,7 +85,7 @@ class DirtyFieldsMixin(object):
 
         if check_m2m:
             modified_m2m_fields = compare_states(self._as_dict_m2m(),
-                                                 self._original_m2m_state,
+                                                 self._original_m2m_state or {},
                                                  self.compare_function)
             modified_fields.update(modified_m2m_fields)
 
@@ -105,4 +108,7 @@ def reset_state(sender, instance, **kwargs):
     # original state should hold all possible dirty fields to avoid
     # getting a `KeyError` when checking if a field is dirty or not
     instance._original_state = instance._as_dict(check_relationship=True)
-    instance._original_m2m_state = instance._as_dict_m2m()
+
+def on_m2m_change(sender, instance, action, **kwargs):
+    if action in ('pre_add', 'pre_remove', 'pre_clear') and instance._original_m2m_state is None:
+        instance._original_m2m_state = instance._as_dict_m2m()
