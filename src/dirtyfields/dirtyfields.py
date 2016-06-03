@@ -27,9 +27,9 @@ class DirtyFieldsMixin(object):
     def _connect_m2m_relations(self):
         for m2m_field, model in self._meta.get_m2m_with_model():
             m2m_changed.connect(
-                on_m2m_changed, 
-                dispatch_uid='{name}-DirtyFieldsMixin-sweeper-m2m'.format(
-                    name=self.__class__.__name__))
+                on_m2m_changed, sender=m2m_field.rel.through,
+                dispatch_uid='{name}-{field}-DirtyFieldsMixin-sweeper-m2m'.format(
+                    name=self.__class__.__name__, field=m2m_field.name))
 
     def _as_dict(self, check_relationship):
         all_field = {}
