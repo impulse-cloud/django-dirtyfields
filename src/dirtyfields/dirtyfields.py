@@ -109,6 +109,6 @@ def reset_state(sender, instance, **kwargs):
     # getting a `KeyError` when checking if a field is dirty or not
     instance._original_state = instance._as_dict(check_relationship=True)
 
-def on_m2m_change(sender, instance, action, **kwargs):
+def on_m2m_changed(sender, instance, action, **kwargs):
     if action in ('pre_add', 'pre_remove', 'pre_clear') and instance._original_m2m_state is None:
         instance._original_m2m_state = instance._as_dict_m2m()
