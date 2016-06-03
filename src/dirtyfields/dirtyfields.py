@@ -19,7 +19,7 @@ class DirtyFieldsMixin(object):
             dispatch_uid='{name}-DirtyFieldsMixin-sweeper'.format(
                 name=self.__class__.__name__))
         self._connect_m2m_relations()
-        self._original_state = instance._as_dict(check_relationship=True)
+        self._original_state = self._as_dict(check_relationship=True)
 
         # m2m state is lazy loaded to prevent extraneous database calls
         self._original_m2m_state = None
