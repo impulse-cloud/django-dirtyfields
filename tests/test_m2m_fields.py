@@ -1,16 +1,12 @@
 import pytest
 
-from .models import TestModel, TestM2MModel
+from .models import TestModel, TestM2MModel, TestModelWithCustomPK, TestM2MModelWithCustomPKOnM2M, \
+    TestModelWithoutM2MCheck, TestM2MModelWithoutM2MModeEnabled
 
 
 @pytest.mark.django_db
 def test_dirty_fields_on_m2m():
-
     tm = TestM2MModel.objects.create()
-
-    # initial state shouldn't be dirty
-    assert not tm.is_dirty()
-
     tm2 = TestModel.objects.create()
     tm.m2m_field.add(tm2)
 
@@ -26,3 +22,32 @@ def test_dirty_fields_on_m2m():
 
     assert tm.get_dirty_fields(check_m2m={'m2m_field': set([0, tm2.id])}) == {'m2m_field': set([tm2.id])}
 
+
+@pytest.mark.django_db
+def test_dirty_fields_on_m2m_not_possible_if_not_enabled():
+    tm = TestM2MModelWithoutM2MModeEnabled.objects.create()
+    tm2 = TestModel.objects.create()
+    tm.m2m_field.add(tm2)
+
+    with pytest.raises(ValueError):
+        assert tm.get_dirty_fields(check_m2m={'m2m_field': set([tm2.id])}) == {}
+
+
+@pytest.mark.django_db
+def test_m2m_check_with_custom_primary_key():
+    # test for bug: https://github.com/romgar/django-dirtyfields/issues/74
+
+    tm = TestModelWithCustomPK.objects.create(custom_primary_key='pk1')
+    m2m_model = TestM2MModelWithCustomPKOnM2M.objects.create()
+
+    # This line was triggering this error:
+    # AttributeError: 'TestModelWithCustomPK' object has no attribute 'id'
+    m2m_model.m2m_field.add(tm)
+
+
+@pytest.mark.django_db
+def test_m2m_disabled_does_not_allow_to_check_m2m_fields():
+    tm = TestModelWithoutM2MCheck.objects.create()
+
+    with pytest.raises(Exception):
+        assert tm.get_dirty_fields(check_m2m={'dummy': True})

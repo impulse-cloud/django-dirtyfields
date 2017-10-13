@@ -9,11 +9,19 @@ def compare_states(new_state, original_state, compare_function):
     modified_field = {}
 
     for key, value in new_state.items():
-        original_value = original_state[key]
+        try:
+            original_value = original_state[key]
+        except KeyError:
+            # In some situation, like deferred fields, it can happen that we try to compare the current
+            # state that has some fields not present in original state because of being initially deferred.
+            # We should not include them in the comparison.
+            continue
 
         is_identical = compare_function[0](value, original_value, **compare_function[1])
-        if not is_identical:
-            modified_field[key] = original_value
+        if is_identical:
+            continue
+
+        modified_field[key] = {'saved': original_value, 'current': value}
 
     return modified_field
 
